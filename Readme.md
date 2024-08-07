@@ -24,7 +24,7 @@ If only a single pixel from the texture (sometimes called a "texel") were select
 for each of the pixels in the rendered scene, the scene pixel would likely not be
 representative of the average color of the pixels in the region of texture pixels
 onto which the scene pixel is projected.  This negatively impacts the accuracy and realism
-of the rendered scene.  This problem might manifest as strang "artifacts" on the rendered
+of the rendered scene.  This problem might manifest as strange "artifacts" on the rendered
 scene, or may even make it impossible to recognize that a given texture was meant to be
 applied to a given region of scene pixels at all.  This phenomenon is called "aliasing",
 or simply sampling error.
@@ -50,7 +50,7 @@ and height of the texture image by the same factor, it may be more helpful
 to scale them by different factors.  This is called "anisotropy", which is either Latin
 or Greek for "not the same direction-ness".  An example of anisotropy is if the camera
 is peering along a brick wall whose closest part is near to the camera
-but which faces in a direction nearly but not quite perpindicular to the direction
+but which faces in a direction nearly perpindicular to the direction
 the camera is pointing.  In such a case, a subimage of the mipmap might be chosen
 that has the same height as the original texture image, but only, say, a quarter of
 its height.  If the wall is long enough, many distinct subimages of the mipmap may be used
