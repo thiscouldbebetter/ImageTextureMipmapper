@@ -1,0 +1,184 @@
+<html>
+<body>
+
+<div id="divUi">
+
+	<h3>Image Texture Mipmapper</h3>
+
+	<p>
+		Upload an image to have it converted into a anisotropic mipmap,
+		for use as a texture in rendering a ray-traced scene.
+	</p>
+
+	<div>
+		<label>Image to Upload:</label>
+		<input type="file" onchange="inputFile_Changed(this)" />
+	</div>
+
+	<div>
+		<label>Image as Anisotropic Mipmap:</label>
+		<br />
+		<div id="divMipmap">[none]</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+function inputFile_Changed(inputFile)
+{
+	var file = inputFile.files[0];
+	if (file != null)
+	{
+		var fileReader = new FileReader();
+		fileReader.onload = (event) =>
+		{
+			var imageAsDataUrl = event.target.result;
+			var d = document;
+			var imageAsImgElement = d.createElement("img");
+			imageAsImgElement.onload = (event2) =>
+			{
+				var mipmap = Mipmap.fromImgElement(imageAsImgElement);
+
+				var divMipmap = d.getElementById("divMipmap");
+				divMipmap.innerHTML = "";
+				divMipmap.appendChild(mipmap.imageAsCanvas);
+			};
+			imageAsImgElement.src = imageAsDataUrl;
+		};
+		fileReader.readAsDataURL(file);
+	}
+}
+
+// Classes.
+
+class Coords
+{
+	constructor(x, y)
+	{
+		this.x = x;
+		this.y = y;
+	}
+
+	static zeroes()
+	{
+		return new Coords(0, 0);
+	}
+
+	clone()
+	{
+		return new Coords(this.x, this.y);
+	}
+
+	divideScalar(scalar)
+	{
+		this.x /= scalar;
+		this.y /= scalar;
+		return this;
+	}
+
+	doublify()
+	{
+		// Not calling this method ".double()" to avoid
+		// naming conflicts with double-precision integers.
+		return this.multiplyScalar(2);
+	}
+
+	half()
+	{
+		return this.divideScalar(2);
+	}
+
+	multiplyScalar(scalar)
+	{
+		this.x *= scalar;
+		this.y *= scalar;
+		return this;
+	}
+
+}
+
+class Mipmap
+{
+	constructor(imageAsCanvas, cellWidths, cellHeights)
+	{
+		this.imageAsCanvas = imageAsCanvas;
+		this.cellWidths = cellWidths;
+		this.cellHeights = cellHeights;
+	}
+
+	static fromImgElement(imageAsImgElement)
+	{
+		var imageSizeInPixels =
+			new Coords
+			(
+				imageAsImgElement.width,
+				imageAsImgElement.height
+			);
+
+		var canvasSizeInPixels =
+			imageSizeInPixels.clone().doublify();
+		var d = document;
+		var canvas = d.createElement("canvas");
+		canvas.width = canvasSizeInPixels.x;
+		canvas.height = canvasSizeInPixels.y;
+
+		var mipmapCellWidth = imageSizeInPixels.x;
+		var mipmapCellWidths = [ mipmapCellWidth ];
+		while (mipmapCellWidth > 1)
+		{
+			mipmapCellWidth = Math.ceil(mipmapCellWidth / 2);
+			mipmapCellWidths.push(mipmapCellWidth);
+		}
+
+		var mipmapCellHeight = imageSizeInPixels.y;
+		var mipmapCellHeights = [ mipmapCellHeight ];
+		while (mipmapCellHeight > 1)
+		{
+			mipmapCellHeight = Math.ceil(mipmapCellHeight / 2);
+			mipmapCellHeights.push(mipmapCellHeight);
+		}
+
+		var mipmapSizeInCells = new Coords
+		(
+			mipmapCellWidths.length,
+			mipmapCellHeights.length
+		);
+
+		var mipmapCellSizeInPixels = Coords.zeroes();
+		var mipmapCellPosInPixels = Coords.zeroes();
+
+		var g = canvas.getContext("2d");
+
+		for (var y = 0; y < mipmapSizeInCells.y; y++)
+		{
+			mipmapCellSizeInPixels.y = mipmapCellHeights[y];
+			mipmapCellPosInPixels.x = 0;
+
+			for (var x = 0; x < mipmapSizeInCells.x; x++)
+			{
+				mipmapCellSizeInPixels.x = mipmapCellWidths[x];
+
+				g.drawImage
+				(
+					imageAsImgElement,
+					mipmapCellPosInPixels.x, mipmapCellPosInPixels.y,
+					mipmapCellSizeInPixels.x, mipmapCellSizeInPixels.y
+				)
+
+				mipmapCellPosInPixels.x += mipmapCellSizeInPixels.x;
+			}
+
+			mipmapCellPosInPixels.y += mipmapCellSizeInPixels.y;
+		}
+
+		var mipmap =
+			new Mipmap(canvas, mipmapCellWidths, mipmapCellHeights);
+
+		return mipmap;
+	}
+}
+
+</script>
+
+</body>
+</html>
